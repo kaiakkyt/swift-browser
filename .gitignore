@@ -1,0 +1,7 @@
+dist/
+build/
+tools/installation/Output/
+__pycache__/
+*.spec
+*.exe
+*.dll
