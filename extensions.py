@@ -106,7 +106,7 @@ class ExtensionManager:
             'version': str,
             'author': str,
             'description': str,
-            'source': str  # GPL compliance - source code URL
+            'source': str
         }
         
         for field, expected_type in required_fields.items():
@@ -388,6 +388,10 @@ class ExtensionManager:
             
             info = self._load_extension(ext_name)
             
+            if ext_name in self.disabled_extensions:
+                self.disabled_extensions.discard(ext_name)
+                self._save_disabled_extensions()
+            
             installed = self.get_installed_extensions()
             if ext_name not in installed:
                 installed.append(ext_name)
@@ -414,6 +418,10 @@ class ExtensionManager:
         try:
             info = self._load_extension(ext_name)
             
+            if ext_name in self.disabled_extensions:
+                self.disabled_extensions.discard(ext_name)
+                self._save_disabled_extensions()
+            
             installed = self.get_installed_extensions()
             if ext_name not in installed:
                 installed.append(ext_name)
@@ -433,6 +441,10 @@ class ExtensionManager:
         
         if name in self.extension_info:
             del self.extension_info[name]
+        
+        if name in self.disabled_extensions:
+            self.disabled_extensions.discard(name)
+            self._save_disabled_extensions()
         
         installed = self.get_installed_extensions()
         if name in installed:

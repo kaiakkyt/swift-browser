@@ -1,5 +1,6 @@
 import subprocess
 import sys
+import os
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -7,6 +8,8 @@ APP_NAME = "Swift Browser"
 
 MAIN_SCRIPT = PROJECT_ROOT / "app.pyw"
 ICON_FILE = PROJECT_ROOT / "icon.ico"
+ISS_SCRIPT = PROJECT_ROOT / "tools" / "installation" / "setup.iss"
+ISCC_PATH = Path(r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe")
 
 DATA_FILES = [
     (PROJECT_ROOT / "app.qss", "."),
@@ -26,9 +29,8 @@ HIDDEN_IMPORTS = [
     "PyQt6.QtNetwork",
 ]
 
-
 def build():
-    """Build the executable using PyInstaller."""
+    """Build the executable using PyInstaller and then the Installer using Inno Setup."""
     
     try:
         import PyInstaller
@@ -62,18 +64,26 @@ def build():
     cmd.append(str(MAIN_SCRIPT))
     
     print(f"\nBuilding {APP_NAME}...")
-    print(f"Command: {' '.join(cmd)}\n")
-    
-    result = subprocess.run(cmd, cwd=PROJECT_ROOT)
-    
-    if result.returncode == 0:
-        output_dir = PROJECT_ROOT / "dist" / APP_NAME
-        print(f"\n✓ Build successful!")
-        print(f"  Output: {output_dir}")
-        print(f"\n  Run '{APP_NAME}.exe' from the dist folder.")
+    subprocess.run(cmd, cwd=PROJECT_ROOT)
+
+    if (PROJECT_ROOT / "dist" / APP_NAME).exists():
+        print(f"\n✓ PyInstaller Build successful!")
+        
+        if ISCC_PATH.exists() and ISS_SCRIPT.exists():
+            print(f"\n--- Starting Inno Setup Compiler ---")
+            iscc_cmd = [str(ISCC_PATH), str(ISS_SCRIPT)]
+            result = subprocess.run(iscc_cmd, cwd=ISS_SCRIPT.parent)
+            
+            if result.returncode == 0:
+                print(f"\nInstaller created successfully!")
+            else:
+                print(f"\nInno Setup failed with exit code {result.returncode}")
+        else:
+            print(f"\nSkipping Inno Setup: ISCC.exe or setup.iss not found.")
+            print(f"  Looked for ISS at: {ISS_SCRIPT}")
     else:
-        print(f"\n✗ Build failed with exit code {result.returncode}")
-        sys.exit(result.returncode)
+        print(f"\n✗ PyInstaller Build failed.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
